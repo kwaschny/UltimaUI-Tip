@@ -1,892 +1,893 @@
 /* globals jQuery, UltimaTip */
-'use strict';
+(function () {
 
-if (!window.UltimaTip) {
+	'use strict';
 
-	// BEGIN: check dependencies
+	if (!window.UltimaTip) {
 
-		if (jQuery === undefined) {
+		// BEGIN: check dependencies
 
-			throw new Error('jQuery missing for UltimaTip');
-		}
+			if (jQuery === undefined) {
 
-		// feature detection
-		if (!jQuery.isPlainObject) {
+				throw new Error('jQuery missing for UltimaTip');
+			}
 
-			throw new Error('jQuery 1.4+ required for UltimaTip');
-		}
+			// feature detection
+			if (!jQuery.isPlainObject) {
 
-	// END: check dependencies
+				throw new Error('jQuery 1.4+ required for UltimaTip');
+			}
 
-	window.UltimaTip = function(target, options) {
+		// END: check dependencies
 
-		// prevent skipping the constructor
-		if (!(this instanceof UltimaTip)) {
+		window.UltimaTip = function(target, options) {
 
-			return new UltimaTip(options);
-		}
+			// prevent skipping the constructor
+			if (!(this instanceof UltimaTip)) {
 
-		// force jQuery wrap
-		target = jQuery(target).first();
+				return new UltimaTip(options);
+			}
 
-		// private scope
-		this._ = {};
+			// force jQuery wrap
+			target = jQuery(target).first();
 
-		// closure reference
-		var self = this;
+			// private scope
+			this._ = {};
 
-		// BEGIN: public properties
+			// closure reference
+			var self = this;
 
-			this.target 	= target;
-			this.bubble 	= null;
-			this.message 	= null;
+			// BEGIN: public properties
 
-			this.visible 	= false;
+				this.target 	= target;
+				this.bubble 	= null;
+				this.message 	= null;
 
-			// BEGIN: options
+				this.visible 	= false;
 
-				this.options = {};
-				this.options.current = {};
+				// BEGIN: options
 
-				this.options['default'] = {
+					this.options = {};
+					this.options.current = {};
 
-					message: '',
+					this.options['default'] = {
 
-					animations: {
+						message: '',
 
-						bubble: {
+						animations: {
 
-							show: {
+							bubble: {
 
-								// effect used to show the bubble
-								effect: 	'fadeIn', // 'none', 'fadeIn'
+								show: {
 
-								// duration of the above effect
-								duration: 	400
+									// effect used to show the bubble
+									effect: 	'fadeIn', // 'none', 'fadeIn'
 
-							},
+									// duration of the above effect
+									duration: 	400
 
-							hide: {
+								},
 
-								// effect used to hide the bubble
-								// undefined: inherit value from show
-								effect: 	undefined,
+								hide: {
 
-								// duration of the above effect
-								// undefined: inherit value from show
-								duration: 	undefined
+									// effect used to hide the bubble
+									// undefined: inherit value from show
+									effect: 	undefined,
+
+									// duration of the above effect
+									// undefined: inherit value from show
+									duration: 	undefined
+
+								}
 
 							}
 
-						}
+						},
 
-					},
+						behavior: {
 
-					behavior: {
-
-						// automatically attach hover event to target
-						hover: true
-
-					},
-
-					css: {
-
-						bubble: {
-
-							// class added to the bubble element
-							className: 	'',
-
-							// anchoring position of the bubble element
-							directions: 'bottom right',
-
-							// positioning offset
-							offset: {
-								x: 0,
-								y: 0
-							},
-
-							// z-index
-							zIndex: 	9100
+							// automatically attach hover event to target
+							hover: true
 
 						},
 
-						message: {
+						css: {
 
-							// class added to the message element
-							className: 	''
+							bubble: {
+
+								// class added to the bubble element
+								className: 	'',
+
+								// anchoring position of the bubble element
+								directions: 'bottom right',
+
+								// positioning offset
+								offset: {
+									x: 0,
+									y: 0
+								},
+
+								// z-index
+								zIndex: 	9100
+
+							},
+
+							message: {
+
+								// class added to the message element
+								className: 	''
+
+							}
+
+						},
+
+						callbacks: {
+
+							// before showing the tip
+							onTipShowing: 	undefined, // (UltimaTip) : return false to interrupt
+
+							// after tip is fully shown
+							onTipShown: 	undefined, // (UltimaTip)
+
+							// before hiding the tip
+							onTipHiding: 	undefined, // (UltimaTip) : return false to interrupt
+
+							// after tip is fully hidden
+							onTipHidden: 	undefined  // (UltimaTip)
 
 						}
 
-					},
+					};
 
-					callbacks: {
+				// END: options
 
-						// before showing the tip
-						onTipShowing: 	undefined, // (UltimaTip) : return false to interrupt
+			// END: public properties
 
-						// after tip is fully shown
-						onTipShown: 	undefined, // (UltimaTip)
+			// BEGIN: private properties
 
-						// before hiding the tip
-						onTipHiding: 	undefined, // (UltimaTip) : return false to interrupt
+				this._.properties = {
 
-						// after tip is fully hidden
-						onTipHidden: 	undefined  // (UltimaTip)
-
+					classNames: {
+						bubble: 	'UltimaTip-bubble',
+						message: 	'UltimaTip-message'
 					}
 
 				};
 
-			// END: options
+			// END: private properties
 
-		// END: public properties
+			// BEGIN: public methods
 
-		// BEGIN: private properties
+				this.hover = function() {
 
-			this._.properties = {
+					this.bubble._.methods.reposition();
+					this.bubble.show();
+				};
 
-				classNames: {
-					bubble: 	'UltimaTip-bubble',
-					message: 	'UltimaTip-message'
-				}
+				this.remove = function() {
 
-			};
+					// remove from collection
+					var tipIndex = UltimaTip.getIndex(this.target);
+					if (tipIndex > -1) {
 
-		// END: private properties
-
-		// BEGIN: public methods
-
-			this.hover = function() {
-
-				this.bubble._.methods.reposition();
-				this.bubble.show();
-			};
-
-			this.remove = function() {
-
-				// remove from collection
-				var tipIndex = UltimaTip.getIndex(this.target);
-				if (tipIndex > -1) {
-
-					UltimaTip.collection.splice(tipIndex, 1);
-				}
-
-				if (this.target instanceof jQuery) {
-
-					this.target.unbind('mouseenter', self._.methods.mouseEnter);
-					this.target.unbind('mouseleave', self._.methods.mouseLeave);
-				}
-
-				if (this.bubble.dom.element instanceof jQuery) {
-
-					this.bubble.dom.element.remove();
-				}
-			};
-
-			this.unhover = function() {
-
-				this.bubble.hide();
-			};
-
-		// END: public methods
-
-		// BEGIN: private methods
-
-			this._.methods = {
-
-				createBubble: function() {
-
-					var bubble = {
-
-						// BEGIN: public properties
-
-							dom: {
-
-								element: jQuery('<div></div>').hide()
-
-							},
-
-						// END: public properties
-
-						// BEGIN: public methods
-
-							// hide bubble
-							hide: function() {
-
-								// callback: on tip hiding
-								if (jQuery.isFunction(self.options.current.callbacks.onTipHiding)) {
-
-									if (self.options.current.callbacks.onTipHiding(self) === false) {
-
-										return;
-									}
-								}
-
-								// determine effect
-								var effect = self.options.current.animations.bubble.hide.effect;
-								if (effect === undefined) {
-
-									effect = self.options.current.animations.bubble.show.effect;
-								}
-
-								// determine duration
-								var duration = self.options.current.animations.bubble.hide.duration;
-								if (duration === undefined) {
-
-									duration = self.options.current.animations.bubble.show.duration;
-								}
-
-								var hasCallback = jQuery.isFunction(self.options.current.callbacks.onTipHidden);
-
-								switch (effect) {
-
-									case 'fadeIn':
-									case 'fadeOut':
-
-										this.dom.element.stop(true, true).fadeOut(
-											duration,
-											function() {
-
-												self.visible = false;
-
-												// callback: on tip hidden
-												if (hasCallback) {
-
-													self.options.current.callbacks.onTipHidden(self);
-												}
-											}
-										);
-
-										break;
-
-									default:
-
-										this.dom.element.hide();
-
-										self.visible = false;
-
-										// callback: on tip hidden
-										if (hasCallback) {
-
-											self.options.current.callbacks.onTipHidden(self);
-										}
-
-										break;
-
-								}
-							},
-
-							// show bubble
-							show: function() {
-
-								// callback: on tip showing
-								if (jQuery.isFunction(self.options.current.callbacks.onTipShowing)) {
-
-									if (self.options.current.callbacks.onTipShowing(self) === false) {
-
-										return;
-									}
-								}
-
-								var hasCallback = jQuery.isFunction(self.options.current.callbacks.onTipShown);
-
-								switch (self.options.current.animations.bubble.show.effect) {
-
-									case 'fadeIn':
-									case 'fadeOut':
-
-										this.dom.element.stop(true, true).fadeIn(
-											self.options.current.animations.bubble.show.duration,
-											function() {
-
-												self.visible = true;
-
-												// callback: on tip shown
-												if (hasCallback) {
-
-													self.options.current.callbacks.onTipShown(self);
-												}
-											}
-										);
-
-										break;
-
-									default:
-
-										this.dom.element.show();
-
-										self.visible = true;
-
-										// callback: on tip shown
-										if (hasCallback) {
-
-											self.options.current.callbacks.onTipShown(self);
-										}
-
-										break;
-
-								}
-							},
-
-						// END: public methods
-
-						_: {
-
-							// BEGIN: private methods
-
-								methods: {
-
-									reposition: function() {
-
-										var pos = self.target.offset();
-
-										if (pos === undefined) { return; }
-
-										var target = {
-											height: self.target.outerHeight(),
-											left: 	pos.left,
-											top: 	pos.top,
-											width: 	self.target.outerWidth()
-										};
-
-										var tip = {
-											height: self.bubble.dom.element.outerHeight(),
-											width: 	self.bubble.dom.element.outerWidth()
-										};
-
-										var directions = self.options.current.css.bubble.directions.split(' ');
-										var left, top;
-
-										for (var i = 0; i < directions.length; i++) {
-
-											switch (directions[i].toLowerCase()) {
-
-												case 'bottom':
-													top 	= (target.top + target.height + self.options.current.css.bubble.offset.y);
-													break;
-
-												case 'center':
-													left 	= (Math.max(0, target.left + (target.width / 2) - (tip.width / 2) + self.options.current.css.bubble.offset.x));
-													break;
-
-												case 'left':
-													left 	= (target.left - tip.width - self.options.current.css.bubble.offset.x);
-													break;
-
-												case 'middle':
-													top 	= (target.top + (target.height / 2) - (tip.height / 2) + self.options.current.css.bubble.offset.y);
-													break;
-
-												case 'right':
-													left 	= (target.left + target.width + self.options.current.css.bubble.offset.x);
-													break;
-
-												case 'top':
-													top 	= (target.top - tip.height - self.options.current.css.bubble.offset.y);
-													break;
-
-											}
-										}
-
-										// force horizontal position
-										if (left === undefined) {
-
-											left = (Math.max(0, target.left + (target.width / 2) - (tip.width / 2) + self.options.current.css.bubble.offset.x));
-										}
-
-										// force vertical position
-										if (top === undefined) {
-
-											top = (target.top + (target.height / 2) - (tip.height / 2) + self.options.current.css.bubble.offset.y);
-										}
-
-										self.bubble.dom.element.css({
-											left: 	left,
-											top: 	top
-										});
-									}
-
-								}
-
-							// END: private methods
-
-						}
-
-					};
-
-					// BEGIN: build element
-
-						// BEGIN: appearance
-
-							// class
-							bubble.dom.element.addClass(self._.properties.classNames.bubble);
-							bubble.dom.element.addClass(self.options.current.css.bubble.className);
-
-							// BEGIN: inline CSS
-
-								var cssAttr = {};
-
-								if (!self.options.current.css.bubble.className) {
-
-									cssAttr.backgroundColor = '#FFFFFF';
-									cssAttr.border 			= '1px solid #808080';
-									cssAttr.boxShadow 		= '2px 2px 4px #808080';
-									cssAttr.color 			= '#808080';
-									cssAttr.fontSize 		= '80%';
-									cssAttr.padding 		= '4px';
-								}
-
-								jQuery.extend(true, cssAttr, self.options.current.css.bubble);
-								jQuery.extend(true, cssAttr, {
-									position: 	'absolute',
-									zIndex: 	self.options.current.css.bubble.zIndex
-								});
-
-								// style
-								bubble.dom.element.css(cssAttr);
-
-							// END: inline CSS
-
-						// END: appearance
-
-					// END: build element
-
-					if (self.options.current.behavior.hover === true) {
-
-						self.target.hover(
-							self._.methods.mouseEnter,
-							self._.methods.mouseLeave
-						);
-
+						UltimaTip.collection.splice(tipIndex, 1);
 					}
 
-					return bubble;
-				},
+					if (this.target instanceof jQuery) {
 
-				createMessage: function() {
-
-					var message = {
-
-						// BEGIN: public properties
-
-							dom: {
-
-								element: jQuery('<div></div>')
-
-							},
-
-						// END: public properties
-
-						// BEGIN: public methods
-
-							hide: function() {
-
-								this.dom.element.hide();
-							},
-
-							set: function(content) {
-
-								this.dom.element.html(content);
-							},
-
-							show: function() {
-
-								this.dom.element.show();
-							},
-
-						// END: public methods
-
-					};
-
-					// BEGIN: build element
-
-						// BEGIN: appearance
-
-							// class
-							message.dom.element.addClass(self._.properties.classNames.message);
-							message.dom.element.addClass(self.options.current.css.message.className);
-
-							// BEGIN: inline CSS
-
-								// style
-								message.dom.element.css(self.options.current.css.message);
-
-							// END: inline CSS
-
-						// END: appearance
-
-					// END: build element
-
-					return message;
-				},
-
-				mouseEnter: function() {
-
-					self.bubble._.methods.reposition();
-					self.bubble.show();
-				},
-
-				mouseLeave: function() {
-
-					self.bubble.hide();
-				},
-
-				mergeOptions: function(options1, options2) {
-
-					self._.methods.translateOptions(options2);
-
-					var result = {};
-					jQuery.extend(true, result, options1);
-					jQuery.extend(true, result, options2);
-
-					return result;
-				},
-
-				translateOptions: function(options) {
-
-					var buffer, length, i, result, ref;
-
-					for (var key in options) {
-
-						if (!options.hasOwnProperty(key)) {
-
-							continue;
-						}
-
-						if (key.indexOf('->') !== 0) {
-
-							continue;
-						}
-
-						buffer = key.replace('->', '');
-						buffer = buffer.split('.');
-						length = buffer.length;
-
-						result = {};
-						ref = result;
-
-						for (i = 0; i < (length - 1); i++) {
-
-							ref[buffer[i]] = {};
-							ref = ref[buffer[i]];
-						}
-
-						ref[buffer[length - 1]] = options[key];
-
-						delete options[key];
-						jQuery.extend(true, options, result);
+						this.target.off('mouseenter', self._.methods.mouseEnter);
+						this.target.off('mouseleave', self._.methods.mouseLeave);
 					}
 
-					return options;
-				}
+					if (this.bubble.dom.element instanceof jQuery) {
 
-			};
+						this.bubble.dom.element.remove();
+					}
+				};
 
-		// END: private methods
+				this.unhover = function() {
 
-		// BEGIN: constructor
+					this.bubble.hide();
+				};
 
-			// prepare options
-			this.options.current = this._.methods.mergeOptions(this.options['default'], UltimaTip.options);
-			this.options.current = this._.methods.mergeOptions(this.options.current, options);
+			// END: public methods
 
-		// END: constructor
+			// BEGIN: private methods
 
-		this.bubble = this._.methods.createBubble();
+				this._.methods = {
 
-		// build message
-		this.message = this._.methods.createMessage();
-		this.message.set(this.options.current.message);
+					createBubble: function() {
 
-		// append message to bubble
-		this.bubble.dom.element.append(this.message.dom.element);
+						var bubble = {
 
-		// place bubble in DOM
-		jQuery('body').append(this.bubble.dom.element);
+							// BEGIN: public properties
 
-		// register as new tip
-		UltimaTip.collection.push(this);
+								dom: {
 
-	};
+									element: jQuery('<div></div>').hide()
 
-	// keep track of the active tips
-	UltimaTip.collection = [];
+								},
 
-	UltimaTip.options = {};
+							// END: public properties
 
-	// BEGIN: static
+							// BEGIN: public methods
 
-		// private scope
-		UltimaTip._ = {
-			methods: {}
+								// hide bubble
+								hide: function() {
+
+									// callback: on tip hiding
+									if (jQuery.isFunction(self.options.current.callbacks.onTipHiding)) {
+
+										if (self.options.current.callbacks.onTipHiding(self) === false) {
+
+											return;
+										}
+									}
+
+									// determine effect
+									var effect = self.options.current.animations.bubble.hide.effect;
+									if (effect === undefined) {
+
+										effect = self.options.current.animations.bubble.show.effect;
+									}
+
+									// determine duration
+									var duration = self.options.current.animations.bubble.hide.duration;
+									if (duration === undefined) {
+
+										duration = self.options.current.animations.bubble.show.duration;
+									}
+
+									var hasCallback = jQuery.isFunction(self.options.current.callbacks.onTipHidden);
+
+									switch (effect) {
+
+										case 'fadeIn':
+										case 'fadeOut':
+
+											this.dom.element.stop(true, true).fadeOut(
+												duration,
+												function() {
+
+													self.visible = false;
+
+													// callback: on tip hidden
+													if (hasCallback) {
+
+														self.options.current.callbacks.onTipHidden(self);
+													}
+												}
+											);
+
+											break;
+
+										default:
+
+											this.dom.element.hide();
+
+											self.visible = false;
+
+											// callback: on tip hidden
+											if (hasCallback) {
+
+												self.options.current.callbacks.onTipHidden(self);
+											}
+
+											break;
+
+									}
+								},
+
+								// show bubble
+								show: function() {
+
+									// callback: on tip showing
+									if (jQuery.isFunction(self.options.current.callbacks.onTipShowing)) {
+
+										if (self.options.current.callbacks.onTipShowing(self) === false) {
+
+											return;
+										}
+									}
+
+									var hasCallback = jQuery.isFunction(self.options.current.callbacks.onTipShown);
+
+									switch (self.options.current.animations.bubble.show.effect) {
+
+										case 'fadeIn':
+										case 'fadeOut':
+
+											this.dom.element.stop(true, true).fadeIn(
+												self.options.current.animations.bubble.show.duration,
+												function() {
+
+													self.visible = true;
+
+													// callback: on tip shown
+													if (hasCallback) {
+
+														self.options.current.callbacks.onTipShown(self);
+													}
+												}
+											);
+
+											break;
+
+										default:
+
+											this.dom.element.show();
+
+											self.visible = true;
+
+											// callback: on tip shown
+											if (hasCallback) {
+
+												self.options.current.callbacks.onTipShown(self);
+											}
+
+											break;
+
+									}
+								},
+
+							// END: public methods
+
+							_: {
+
+								// BEGIN: private methods
+
+									methods: {
+
+										reposition: function() {
+
+											var pos = self.target.offset();
+
+											if (pos === undefined) { return; }
+
+											var target = {
+												height: self.target.outerHeight(),
+												left: 	pos.left,
+												top: 	pos.top,
+												width: 	self.target.outerWidth()
+											};
+
+											var tip = {
+												height: self.bubble.dom.element.outerHeight(),
+												width: 	self.bubble.dom.element.outerWidth()
+											};
+
+											var directions = self.options.current.css.bubble.directions.split(' ');
+											var left, top;
+
+											for (var i = 0; i < directions.length; i++) {
+
+												switch (directions[i].toLowerCase()) {
+
+													case 'bottom':
+														top 	= (target.top + target.height + self.options.current.css.bubble.offset.y);
+														break;
+
+													case 'center':
+														left 	= (Math.max(0, target.left + (target.width / 2) - (tip.width / 2) + self.options.current.css.bubble.offset.x));
+														break;
+
+													case 'left':
+														left 	= (target.left - tip.width - self.options.current.css.bubble.offset.x);
+														break;
+
+													case 'middle':
+														top 	= (target.top + (target.height / 2) - (tip.height / 2) + self.options.current.css.bubble.offset.y);
+														break;
+
+													case 'right':
+														left 	= (target.left + target.width + self.options.current.css.bubble.offset.x);
+														break;
+
+													case 'top':
+														top 	= (target.top - tip.height - self.options.current.css.bubble.offset.y);
+														break;
+
+												}
+											}
+
+											// force horizontal position
+											if (left === undefined) {
+
+												left = (Math.max(0, target.left + (target.width / 2) - (tip.width / 2) + self.options.current.css.bubble.offset.x));
+											}
+
+											// force vertical position
+											if (top === undefined) {
+
+												top = (target.top + (target.height / 2) - (tip.height / 2) + self.options.current.css.bubble.offset.y);
+											}
+
+											self.bubble.dom.element.css({
+												left: 	left,
+												top: 	top
+											});
+										}
+
+									}
+
+								// END: private methods
+
+							}
+
+						};
+
+						// BEGIN: build element
+
+							// BEGIN: appearance
+
+								// class
+								bubble.dom.element.addClass(self._.properties.classNames.bubble);
+								bubble.dom.element.addClass(self.options.current.css.bubble.className);
+
+								// BEGIN: inline CSS
+
+									var cssAttr = {};
+
+									if (!self.options.current.css.bubble.className) {
+
+										cssAttr.backgroundColor = '#FFFFFF';
+										cssAttr.border 			= '1px solid #808080';
+										cssAttr.boxShadow 		= '2px 2px 4px #808080';
+										cssAttr.color 			= '#808080';
+										cssAttr.fontSize 		= '80%';
+										cssAttr.padding 		= '4px';
+									}
+
+									jQuery.extend(true, cssAttr, self.options.current.css.bubble);
+									jQuery.extend(true, cssAttr, {
+										position: 	'absolute',
+										zIndex: 	self.options.current.css.bubble.zIndex
+									});
+
+									// style
+									bubble.dom.element.css(cssAttr);
+
+								// END: inline CSS
+
+							// END: appearance
+
+						// END: build element
+
+						if (self.options.current.behavior.hover === true) {
+
+							self.target.on('mouseenter touchstart', self._.methods.mouseEnter);
+							self.target.on('mouseleave touchend', self._.methods.mouseLeave);
+						}
+
+						return bubble;
+					},
+
+					createMessage: function() {
+
+						var message = {
+
+							// BEGIN: public properties
+
+								dom: {
+
+									element: jQuery('<div></div>')
+
+								},
+
+							// END: public properties
+
+							// BEGIN: public methods
+
+								hide: function() {
+
+									this.dom.element.hide();
+								},
+
+								set: function(content) {
+
+									this.dom.element.html(content);
+								},
+
+								show: function() {
+
+									this.dom.element.show();
+								},
+
+							// END: public methods
+
+						};
+
+						// BEGIN: build element
+
+							// BEGIN: appearance
+
+								// class
+								message.dom.element.addClass(self._.properties.classNames.message);
+								message.dom.element.addClass(self.options.current.css.message.className);
+
+								// BEGIN: inline CSS
+
+									// style
+									message.dom.element.css(self.options.current.css.message);
+
+								// END: inline CSS
+
+							// END: appearance
+
+						// END: build element
+
+						return message;
+					},
+
+					mouseEnter: function() {
+
+						self.bubble._.methods.reposition();
+						self.bubble.show();
+					},
+
+					mouseLeave: function() {
+
+						self.bubble.hide();
+					},
+
+					mergeOptions: function(options1, options2) {
+
+						self._.methods.translateOptions(options2);
+
+						var result = {};
+						jQuery.extend(true, result, options1);
+						jQuery.extend(true, result, options2);
+
+						return result;
+					},
+
+					translateOptions: function(options) {
+
+						var buffer, length, i, result, ref;
+
+						for (var key in options) {
+
+							if (!options.hasOwnProperty(key)) {
+
+								continue;
+							}
+
+							if (key.indexOf('->') !== 0) {
+
+								continue;
+							}
+
+							buffer = key.replace('->', '');
+							buffer = buffer.split('.');
+							length = buffer.length;
+
+							result = {};
+							ref = result;
+
+							for (i = 0; i < (length - 1); i++) {
+
+								ref[buffer[i]] = {};
+								ref = ref[buffer[i]];
+							}
+
+							ref[buffer[length - 1]] = options[key];
+
+							delete options[key];
+							jQuery.extend(true, options, result);
+						}
+
+						return options;
+					}
+
+				};
+
+			// END: private methods
+
+			// BEGIN: constructor
+
+				// prepare options
+				this.options.current = this._.methods.mergeOptions(this.options['default'], UltimaTip.options);
+				this.options.current = this._.methods.mergeOptions(this.options.current, options);
+
+			// END: constructor
+
+			this.bubble = this._.methods.createBubble();
+
+			// build message
+			this.message = this._.methods.createMessage();
+			this.message.set(this.options.current.message);
+
+			// append message to bubble
+			this.bubble.dom.element.append(this.message.dom.element);
+
+			// place bubble in DOM
+			jQuery('body').append(this.bubble.dom.element);
+
+			// register as new tip
+			UltimaTip.collection.push(this);
+
 		};
 
-		// BEGIN: private methods
+		// keep track of the active tips
+		UltimaTip.collection = [];
 
-			// returns if the provided data is a dialog options object
-			UltimaTip._.methods.isOptions = function(data) {
+		UltimaTip.options = {};
 
-				if (!jQuery.isPlainObject(data)) {
+		// BEGIN: static
 
-					return false;
-				}
+			// private scope
+			UltimaTip._ = {
+				methods: {}
+			};
 
-				if (
-					(data.message && !jQuery.isPlainObject(data.message)) ||
-					(data.css && jQuery.isPlainObject(data.css)) ||
-					(data.callbacks && jQuery.isPlainObject(data.callbacks))
-				) {
+			// BEGIN: private methods
 
-					return true;
-				}
+				// returns if the provided data is a dialog options object
+				UltimaTip._.methods.isOptions = function(data) {
 
-				for (var key in data) {
+					if (!jQuery.isPlainObject(data)) {
 
-					if (!data.hasOwnProperty(key)) {
-
-						continue;
+						return false;
 					}
 
-					if (/^->[a-z]+(\.[a-z]+)?/.test(key)) {
+					if (
+						(data.message && !jQuery.isPlainObject(data.message)) ||
+						(data.css && jQuery.isPlainObject(data.css)) ||
+						(data.callbacks && jQuery.isPlainObject(data.callbacks))
+					) {
 
 						return true;
 					}
-				}
 
-				return false;
-			};
+					for (var key in data) {
 
-		// END: private methods
+						if (!data.hasOwnProperty(key)) {
 
-		// BEGIN: public methods
+							continue;
+						}
 
-			// removes all tips
-			UltimaTip.clear = function() {
+						if (/^->[a-z]+(\.[a-z]+)?/.test(key)) {
 
-				var count = 0;
-				var tip;
+							return true;
+						}
+					}
 
-				while (true) {
+					return false;
+				};
 
-					tip = UltimaTip.get(0);
+			// END: private methods
 
-					if (tip !== null) {
+			// BEGIN: public methods
 
-						count += 1;
+				// removes all tips
+				UltimaTip.clear = function() {
+
+					var count = 0;
+					var tip;
+
+					while (true) {
+
+						tip = UltimaTip.get(0);
+
+						if (tip !== null) {
+
+							count += 1;
+							tip.remove();
+
+						} else {
+
+							break;
+						}
+					}
+
+					return count;
+				};
+
+				// get the tip by either index or target
+				UltimaTip.get = function(target) {
+
+					// by index
+					if (typeof target === 'number') {
+
+						if (UltimaTip.collection.length > target) {
+
+							return UltimaTip.collection[target];
+						}
+
+					// by target
+					} else {
+
+						var tipIndex = UltimaTip.getIndex(target);
+
+						if (tipIndex > -1) {
+
+							return UltimaTip.collection[tipIndex];
+						}
+					}
+
+					return null;
+				};
+
+				// get the first collection index of the tip by target
+				UltimaTip.getIndex = function(target) {
+
+					if (target instanceof jQuery) {
+
+						target = target[0];
+					}
+
+					var i = 0, len = UltimaTip.collection.length;
+					for (i; i < len; i++) {
+
+						if (target === UltimaTip.collection[i].target[0]) {
+
+							return i;
+						}
+					}
+
+					return -1;
+				};
+
+				// remove all tips linked to the target
+				UltimaTip.remove = function(target) {
+
+					var count = 0;
+
+					var tip = UltimaTip.get(target);
+
+					while (tip !== null) {
+
 						tip.remove();
 
-					} else {
+						count += 1;
+						tip = UltimaTip.get(target);
+					}
 
-						break;
+					return count;
+				};
+
+			// END: public methods
+
+		// END: static
+
+		// BEGIN: jQuery integration
+
+			// option defaults for all jQuery integrated calls
+			jQuery.UltimaTip = {
+				options: {}
+			};
+
+			jQuery.UltimaTip.hover = function(target, message, options) {
+				//                   function(target, message)
+				//                   function(target, options)
+
+				if (target === undefined) {
+
+					return null;
+				}
+
+				if (arguments.length === 2) {
+
+					// options
+					if (UltimaTip._.methods.isOptions(message)) {
+
+						options = message;
+						message = undefined;
+
+					// message
 					}
 				}
 
-				return count;
-			};
+				var mergedOptions = {};
+				jQuery.extend(true, mergedOptions, jQuery.UltimaTip.options);
+				jQuery.extend(true, mergedOptions, options);
 
-			// get the tip by either index or target
-			UltimaTip.get = function(target) {
+				if (message) {
 
-				// by index
-				if (typeof target === 'number') {
-
-					if (UltimaTip.collection.length > target) {
-
-						return UltimaTip.collection[target];
-					}
-
-				// by target
-				} else {
-
-					var tipIndex = UltimaTip.getIndex(target);
-
-					if (tipIndex > -1) {
-
-						return UltimaTip.collection[tipIndex];
-					}
+					mergedOptions.message = message;
 				}
 
-				return null;
+				var tip = new UltimaTip(target, mergedOptions);
+				tip.hover();
+
+				return tip;
 			};
 
-			// get the first collection index of the tip by target
-			UltimaTip.getIndex = function(target) {
+			jQuery.UltimaTip.unhover = function(target) {
 
-				if (target instanceof jQuery) {
+				return UltimaTip.remove(target);
+			};
 
-					target = target[0];
+			jQuery.fn.UltimaTip = function(message, options) {
+				//                function(message)
+				//                function(options)
+
+				if ((message === undefined) || (message === '')) {
+
+					return UltimaTip.remove(this);
 				}
 
-				var i = 0, len = UltimaTip.collection.length;
-				for (i; i < len; i++) {
+				if (arguments.length === 1) {
 
-					if (target === UltimaTip.collection[i].target[0]) {
+					// options
+					if (UltimaTip._.methods.isOptions(message)) {
 
-						return i;
+						options = message;
+						message = undefined;
+
+					// message
 					}
 				}
 
-				return -1;
+				var mergedOptions = {};
+				jQuery.extend(true, mergedOptions, jQuery.UltimaTip.options);
+				jQuery.extend(true, mergedOptions, options);
+
+				if (message) {
+
+					mergedOptions.message = message;
+				}
+
+				this.each(function() {
+
+					new UltimaTip(this, mergedOptions);
+				});
+
+				return this;
 			};
 
-			// remove all tips linked to the target
-			UltimaTip.remove = function(target) {
+			jQuery.fn.hoverTip = function() {
 
-				var count = 0;
+				this.each(function() {
 
-				var tip = UltimaTip.get(target);
-
-				while (tip !== null) {
-
-					tip.remove();
-
-					count += 1;
-					tip = UltimaTip.get(target);
-				}
-
-				return count;
-			};
-
-		// END: public methods
-
-	// END: static
-
-	// BEGIN: jQuery integration
-
-		// option defaults for all jQuery integrated calls
-		jQuery.UltimaTip = {
-			options: {}
-		};
-
-		jQuery.UltimaTip.hover = function(target, message, options) {
-			//                   function(target, message)
-			//                   function(target, options)
-
-			if (target === undefined) {
-
-				return null;
-			}
-
-			if (arguments.length === 2) {
-
-				// options
-				if (UltimaTip._.methods.isOptions(message)) {
-
-					options = message;
-					message = undefined;
-
-				// message
-				}
-			}
-
-			var mergedOptions = {};
-			jQuery.extend(true, mergedOptions, jQuery.UltimaTip.options);
-			jQuery.extend(true, mergedOptions, options);
-
-			if (message) {
-
-				mergedOptions.message = message;
-			}
-
-			var tip = new UltimaTip(target, mergedOptions);
-			tip.hover();
-
-			return tip;
-		};
-
-		jQuery.UltimaTip.unhover = function(target) {
-
-			return UltimaTip.remove(target);
-		};
-
-		jQuery.fn.UltimaTip = function(message, options) {
-			//                function(message)
-			//                function(options)
-
-			if ((message === undefined) || (message === '')) {
-
-				return UltimaTip.remove(this);
-			}
-
-			if (arguments.length === 1) {
-
-				// options
-				if (UltimaTip._.methods.isOptions(message)) {
-
-					options = message;
-					message = undefined;
-
-				// message
-				}
-			}
-
-			var mergedOptions = {};
-			jQuery.extend(true, mergedOptions, jQuery.UltimaTip.options);
-			jQuery.extend(true, mergedOptions, options);
-
-			if (message) {
-
-				mergedOptions.message = message;
-			}
-
-			this.each(function() {
-
-				new UltimaTip(this, mergedOptions);
-			});
-
-			return this;
-		};
-
-		jQuery.fn.hoverTip = function() {
-
-			this.each(function() {
-
-				var tip = UltimaTip.get(this);
-				if (tip !== null) {
-
-					tip.hover();
-				}
-			});
-
-			return this;
-		};
-
-		jQuery.fn.unhoverTip = function() {
-
-			this.each(function() {
-
-				var tip = UltimaTip.get(this);
-				if (tip !== null) {
-
-					tip.unhover();
-				}
-			});
-
-			return this;
-		};
-
-		jQuery.fn.toggleHoverTip = function() {
-
-			this.each(function() {
-
-				var tip = UltimaTip.get(this);
-				if (tip !== null) {
-
-					if (tip.visible) {
-
-						tip.unhover();
-
-					} else {
+					var tip = UltimaTip.get(this);
+					if (tip !== null) {
 
 						tip.hover();
 					}
-				}
-			});
+				});
 
-			return this;
-		};
+				return this;
+			};
 
-	// END: jQuery integration
+			jQuery.fn.unhoverTip = function() {
 
-	UltimaTip.version = '0.4.4';
-}
+				this.each(function() {
+
+					var tip = UltimaTip.get(this);
+					if (tip !== null) {
+
+						tip.unhover();
+					}
+				});
+
+				return this;
+			};
+
+			jQuery.fn.toggleHoverTip = function() {
+
+				this.each(function() {
+
+					var tip = UltimaTip.get(this);
+					if (tip !== null) {
+
+						if (tip.visible) {
+
+							tip.unhover();
+
+						} else {
+
+							tip.hover();
+						}
+					}
+				});
+
+				return this;
+			};
+
+		// END: jQuery integration
+
+		UltimaTip.version = '0.4.5';
+	}
+
+}());
