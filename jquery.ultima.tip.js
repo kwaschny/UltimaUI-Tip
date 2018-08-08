@@ -25,7 +25,7 @@
 			// prevent skipping the constructor
 			if (!(this instanceof UltimaTip)) {
 
-				return new UltimaTip(options);
+				return new UltimaTip(target, options);
 			}
 
 			// force jQuery wrap
@@ -787,7 +787,13 @@
 					mergedOptions.message = message;
 				}
 
-				var tip = new UltimaTip(target, mergedOptions);
+				// prevent duplicates
+				var tip = UltimaTip.get(target);
+				if (tip === null) {
+
+					tip = new UltimaTip(target, mergedOptions);
+				}
+
 				tip.hover();
 
 				return tip;
@@ -830,7 +836,11 @@
 
 				this.each(function() {
 
-					new UltimaTip(this, mergedOptions);
+					// prevent duplicates
+					if (UltimaTip.get(this) === null) {
+
+						new UltimaTip(this, mergedOptions);
+					}
 				});
 
 				return this;
@@ -887,7 +897,7 @@
 
 		// END: jQuery integration
 
-		UltimaTip.version = '0.4.5';
+		UltimaTip.version = '0.4.6';
 	}
 
 }());
