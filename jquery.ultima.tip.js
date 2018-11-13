@@ -63,7 +63,7 @@
 									// effect used to show the bubble
 									effect: 	'fadeIn', // 'none', 'fadeIn'
 
-									// duration of the above effect
+									// duration of the hover-in effect
 									duration: 	400
 
 								},
@@ -74,7 +74,7 @@
 									// undefined: inherit value from show
 									effect: 	undefined,
 
-									// duration of the above effect
+									// duration of the hover-out effect
 									// undefined: inherit value from show
 									duration: 	undefined
 
@@ -85,6 +85,9 @@
 						},
 
 						behavior: {
+
+							// time to delay tooltip repositioning when following the cursor (affects "directions: cursor" only)
+							cursorDelay: 200,
 
 							// automatically attach hover event to target
 							hover: true
@@ -108,7 +111,7 @@
 								},
 
 								// z-index
-								zIndex: 	9100
+								zIndex: 9100
 
 							},
 
@@ -154,6 +157,8 @@
 
 				};
 
+				this._.timeout = {};
+
 			// END: private properties
 
 			// BEGIN: public methods
@@ -175,8 +180,8 @@
 
 					if (this.target instanceof jQuery) {
 
-						this.target.off('mouseenter', self._.methods.mouseEnter);
-						this.target.off('mouseleave', self._.methods.mouseLeave);
+						this.target.off('mouseenter touchstart', self._.methods.mouseEnter);
+						this.target.off('mouseleave touchend', self._.methods.mouseLeave);
 					}
 
 					if (this.bubble.dom.element instanceof jQuery) {
@@ -387,6 +392,10 @@
 														top 	= (target.top - tip.height - self.options.current.css.bubble.offset.y);
 														break;
 
+													case 'cursor':
+														left 	= (window._UltimaTip_mouseX + (24 + self.options.current.css.bubble.offset.x));
+														top 	= (window._UltimaTip_mouseY + (32 + self.options.current.css.bubble.offset.y));
+														break;
 												}
 											}
 
@@ -457,6 +466,12 @@
 
 							self.target.on('mouseenter touchstart', self._.methods.mouseEnter);
 							self.target.on('mouseleave touchend', self._.methods.mouseLeave);
+
+							// track movement within hover for "cursor" mode
+							if (self.options.current.css.bubble.directions.toLowerCase() === 'cursor') {
+
+								self.target.on('mousemove', self._.methods.mouseMove);
+							}
 						}
 
 						return bubble;
@@ -528,6 +543,12 @@
 					mouseLeave: function() {
 
 						self.bubble.hide();
+					},
+
+					mouseMove: function() {
+
+						clearTimeout(self._.timeout.mouseMove);
+						self._.timeout.mouseMove = setTimeout(self.bubble._.methods.reposition, self.options.current.behavior.cursorDelay);
 					},
 
 					mergeOptions: function(options1, options2) {
@@ -897,7 +918,20 @@
 
 		// END: jQuery integration
 
-		UltimaTip.version = '0.4.6';
+		UltimaTip.version = '0.5.0';
+
+		// BEGIN: track mouse position
+
+			window._UltimaTip_mouseX = 0;
+			window._UltimaTip_mouseY = 0;
+
+			document.addEventListener('mousemove', function(event) {
+
+				window._UltimaTip_mouseX = event.pageX;
+				window._UltimaTip_mouseY = event.pageY;
+			});
+
+		// END: track mouse position
 	}
 
 }());
