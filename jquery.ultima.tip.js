@@ -39,11 +39,11 @@
 
 			// BEGIN: public properties
 
-				this.target 	= target;
-				this.bubble 	= null;
-				this.message 	= null;
+				this.target  = target;
+				this.bubble  = null;
+				this.message = null;
 
-				this.visible 	= false;
+				this.visible = false;
 
 				// BEGIN: options
 
@@ -61,10 +61,10 @@
 								show: {
 
 									// effect used to show the bubble
-									effect: 	'fadeIn', // 'none', 'fadeIn'
+									effect: 'fadeIn', // 'none', 'fadeIn'
 
 									// duration of the hover-in effect
-									duration: 	400
+									duration: 400
 
 								},
 
@@ -72,11 +72,11 @@
 
 									// effect used to hide the bubble
 									// undefined: inherit value from show
-									effect: 	undefined,
+									effect: undefined,
 
 									// duration of the hover-out effect
 									// undefined: inherit value from show
-									duration: 	undefined
+									duration: undefined
 
 								}
 
@@ -99,7 +99,7 @@
 							bubble: {
 
 								// class added to the bubble element
-								className: 	'',
+								className: '',
 
 								// anchoring position of the bubble element
 								directions: 'bottom right',
@@ -118,7 +118,7 @@
 							message: {
 
 								// class added to the message element
-								className: 	''
+								className: ''
 
 							}
 
@@ -127,16 +127,16 @@
 						callbacks: {
 
 							// before showing the tip
-							onTipShowing: 	undefined, // (UltimaTip) : return false to interrupt
+							onTipShowing: undefined, // (UltimaTip) : return false to interrupt
 
 							// after tip is fully shown
-							onTipShown: 	undefined, // (UltimaTip)
+							onTipShown: undefined, // (UltimaTip)
 
 							// before hiding the tip
-							onTipHiding: 	undefined, // (UltimaTip) : return false to interrupt
+							onTipHiding: undefined, // (UltimaTip) : return false to interrupt
 
 							// after tip is fully hidden
-							onTipHidden: 	undefined  // (UltimaTip)
+							onTipHidden: undefined  // (UltimaTip)
 
 						}
 
@@ -151,8 +151,8 @@
 				this._.properties = {
 
 					classNames: {
-						bubble: 	'UltimaTip-bubble',
-						message: 	'UltimaTip-message'
+						bubble:  'UltimaTip-bubble',
+						message: 'UltimaTip-message'
 					}
 
 				};
@@ -182,6 +182,9 @@
 
 						this.target.off('mouseenter touchstart', self._.methods.mouseEnter);
 						this.target.off('mouseleave touchend', self._.methods.mouseLeave);
+						this.target.off('mousemove', self._.methods.mouseMove);
+
+						this.target.removeAttr('aria-describedby');
 					}
 
 					if (this.bubble.dom.element instanceof jQuery) {
@@ -203,13 +206,15 @@
 
 					createBubble: function() {
 
+						var id = Date.now();
+
 						var bubble = {
 
 							// BEGIN: public properties
 
 								dom: {
 
-									element: jQuery('<div></div>').hide()
+									element: jQuery('<div id="' + id + '" role="tooltip"></div>').hide()
 
 								},
 
@@ -351,14 +356,14 @@
 
 											var target = {
 												height: self.target.outerHeight(),
-												left: 	pos.left,
-												top: 	pos.top,
-												width: 	self.target.outerWidth()
+												left:  pos.left,
+												top:   pos.top,
+												width: self.target.outerWidth()
 											};
 
 											var tip = {
 												height: self.bubble.dom.element.outerHeight(),
-												width: 	self.bubble.dom.element.outerWidth()
+												width:  self.bubble.dom.element.outerWidth()
 											};
 
 											var directions = self.options.current.css.bubble.directions.split(' ');
@@ -369,32 +374,32 @@
 												switch (directions[i].toLowerCase()) {
 
 													case 'bottom':
-														top 	= (target.top + target.height + self.options.current.css.bubble.offset.y);
+														top = (target.top + target.height + self.options.current.css.bubble.offset.y);
 														break;
 
 													case 'center':
-														left 	= (Math.max(0, target.left + (target.width / 2) - (tip.width / 2) + self.options.current.css.bubble.offset.x));
+														left = (Math.max(0, target.left + (target.width / 2) - (tip.width / 2) + self.options.current.css.bubble.offset.x));
 														break;
 
 													case 'left':
-														left 	= (target.left - tip.width - self.options.current.css.bubble.offset.x);
+														left = (target.left - tip.width - self.options.current.css.bubble.offset.x);
 														break;
 
 													case 'middle':
-														top 	= (target.top + (target.height / 2) - (tip.height / 2) + self.options.current.css.bubble.offset.y);
+														top = (target.top + (target.height / 2) - (tip.height / 2) + self.options.current.css.bubble.offset.y);
 														break;
 
 													case 'right':
-														left 	= (target.left + target.width + self.options.current.css.bubble.offset.x);
+														left = (target.left + target.width + self.options.current.css.bubble.offset.x);
 														break;
 
 													case 'top':
-														top 	= (target.top - tip.height - self.options.current.css.bubble.offset.y);
+														top = (target.top - tip.height - self.options.current.css.bubble.offset.y);
 														break;
 
 													case 'cursor':
-														left 	= (window._UltimaTip_mouseX + (24 + self.options.current.css.bubble.offset.x));
-														top 	= (window._UltimaTip_mouseY + (32 + self.options.current.css.bubble.offset.y));
+														left = (window._UltimaTip_mouseX + (24 + self.options.current.css.bubble.offset.x));
+														top  = (window._UltimaTip_mouseY + (32 + self.options.current.css.bubble.offset.y));
 														break;
 												}
 											}
@@ -412,8 +417,8 @@
 											}
 
 											self.bubble.dom.element.css({
-												left: 	left,
-												top: 	top
+												left: left,
+												top:  top
 											});
 										}
 
@@ -440,17 +445,17 @@
 									if (!self.options.current.css.bubble.className) {
 
 										cssAttr.backgroundColor = '#FFFFFF';
-										cssAttr.border 			= '1px solid #808080';
-										cssAttr.boxShadow 		= '2px 2px 4px #808080';
-										cssAttr.color 			= '#808080';
-										cssAttr.fontSize 		= '80%';
-										cssAttr.padding 		= '4px';
+										cssAttr.border          = '1px solid #808080';
+										cssAttr.boxShadow       = '2px 2px 4px #808080';
+										cssAttr.color           = '#808080';
+										cssAttr.fontSize        = '80%';
+										cssAttr.padding         = '4px';
 									}
 
 									jQuery.extend(true, cssAttr, self.options.current.css.bubble);
 									jQuery.extend(true, cssAttr, {
-										position: 	'absolute',
-										zIndex: 	self.options.current.css.bubble.zIndex
+										position: 'absolute',
+										zIndex:   self.options.current.css.bubble.zIndex
 									});
 
 									// style
@@ -464,8 +469,8 @@
 
 						if (self.options.current.behavior.hover === true) {
 
-							self.target.on('mouseenter touchstart', self._.methods.mouseEnter);
-							self.target.on('mouseleave touchend', self._.methods.mouseLeave);
+							self.target.on('mouseenter touchstart focusin', self._.methods.mouseEnter);
+							self.target.on('mouseleave touchend focusout', self._.methods.mouseLeave);
 
 							// track movement within hover for "cursor" mode
 							if (self.options.current.css.bubble.directions.toLowerCase() === 'cursor') {
@@ -614,6 +619,9 @@
 
 			this.bubble = this._.methods.createBubble();
 
+			// link to target
+			this.target.attr('aria-describedby', this.bubble.dom.element.prop('id'));
+
 			// build message
 			this.message = this._.methods.createMessage();
 			this.message.set(this.options.current.message);
@@ -683,28 +691,36 @@
 				// removes all tips
 				UltimaTip.clear = function() {
 
-					var count = 0;
-					var tip;
+					var tips  = UltimaTip.collection;
+					var count = tips.length;
 
-					while (true) {
+					for (var i = 0; i < tips.length;) {
 
-						tip = UltimaTip.get(0);
-
-						if (tip !== null) {
-
-							count += 1;
-							tip.remove();
-
-						} else {
-
-							break;
-						}
+						tips[i].remove();
 					}
 
 					return count;
 				};
 
-				// get the tip by either index or target
+				// check if a tip for the provided creation options already exists
+				UltimaTip.exists = function(options) {
+
+					var newMessage = options.message;
+
+					var i = 0, len = UltimaTip.collection.length;
+					for (i; i < len; i++) {
+
+						var oldMessage = UltimaTip.collection[i].options.current.message;
+
+						if (oldMessage === newMessage) {
+							return true;
+						}
+					}
+
+					return false;
+				};
+
+				// get the tip by either index or target (first element)
 				UltimaTip.get = function(target) {
 
 					// by index
@@ -727,6 +743,28 @@
 					}
 
 					return null;
+				};
+
+				// get all tips by target
+				UltimaTip.getAll = function(target) {
+
+					if (target instanceof jQuery) {
+
+						target = target[0];
+					}
+
+					var result = [];
+
+					var i = 0, len = UltimaTip.collection.length;
+					for (i; i < len; i++) {
+
+						if (target === UltimaTip.collection[i].target[0]) {
+
+							result.push(UltimaTip.collection[i]);
+						}
+					}
+
+					return result;
 				};
 
 				// get the first collection index of the tip by target
@@ -754,14 +792,11 @@
 
 					var count = 0;
 
-					var tip = UltimaTip.get(target);
+					var tips = UltimaTip.getAll(target);
+					for (var i = 0; i < tips.length; i++) {
 
-					while (tip !== null) {
-
-						tip.remove();
-
+						tips[i].remove();
 						count += 1;
-						tip = UltimaTip.get(target);
 					}
 
 					return count;
@@ -808,16 +843,24 @@
 					mergedOptions.message = message;
 				}
 
-				// prevent duplicates
-				var tip = UltimaTip.get(target);
-				if (tip === null) {
+				if (UltimaTip.exists(mergedOptions)) {
 
-					tip = new UltimaTip(target, mergedOptions);
+					var tips = UltimaTip.getAll(target);
+
+					for (var i = 0; i < tips.length; i++) {
+
+						tips[i].hover();
+					}
+
+					return tips;
+
+				} else {
+
+					var tip = new UltimaTip(target, mergedOptions);
+					tip.hover();
+
+					return tip;
 				}
-
-				tip.hover();
-
-				return tip;
 			};
 
 			jQuery.UltimaTip.unhover = function(target) {
@@ -857,11 +900,9 @@
 
 				this.each(function() {
 
-					// prevent duplicates
-					if (UltimaTip.get(this) === null) {
+					if (UltimaTip.exists(mergedOptions)) { return true; }
 
-						new UltimaTip(this, mergedOptions);
-					}
+					new UltimaTip(this, mergedOptions);
 				});
 
 				return this;
@@ -871,10 +912,10 @@
 
 				this.each(function() {
 
-					var tip = UltimaTip.get(this);
-					if (tip !== null) {
+					var tips = UltimaTip.getAll(this);
+					for (var i = 0; i < tips.length; i++) {
 
-						tip.hover();
+						tips[i].hover();
 					}
 				});
 
@@ -885,10 +926,10 @@
 
 				this.each(function() {
 
-					var tip = UltimaTip.get(this);
-					if (tip !== null) {
+					var tips = UltimaTip.getAll(this);
+					for (var i = 0; i < tips.length; i++) {
 
-						tip.unhover();
+						tips[i].unhover();
 					}
 				});
 
@@ -899,16 +940,16 @@
 
 				this.each(function() {
 
-					var tip = UltimaTip.get(this);
-					if (tip !== null) {
+					var tips = UltimaTip.getAll(this);
+					for (var i = 0; i < tips.length; i++) {
 
-						if (tip.visible) {
+						if (tips[i].visible) {
 
-							tip.unhover();
+							tips[i].unhover();
 
 						} else {
 
-							tip.hover();
+							tips[i].hover();
 						}
 					}
 				});
@@ -918,14 +959,14 @@
 
 		// END: jQuery integration
 
-		UltimaTip.version = '0.5.0';
+		UltimaTip.version = '0.6.0';
 
 		// BEGIN: track mouse position
 
 			window._UltimaTip_mouseX = 0;
 			window._UltimaTip_mouseY = 0;
 
-			document.addEventListener('mousemove', function(event) {
+			jQuery(document).on('mousemove', function(event) {
 
 				window._UltimaTip_mouseX = event.pageX;
 				window._UltimaTip_mouseY = event.pageY;
